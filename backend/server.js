@@ -24,7 +24,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Request logging middleware
+// Middleware to log requests
 app.use((req, res, next) => {
   logger.info(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   logger.info(`[${new Date().toISOString()}] Request headers:`, req.headers);
@@ -151,6 +151,7 @@ app.use((err, req, res, next) => {
 const server = app.listen(PORT, '0.0.0.0', () => {
   // Use logger for logging
   logger.info(`Server running on port ${PORT}`);
+  startAgent();
 });
 
 // Define the agent behavior
@@ -221,13 +222,6 @@ const agentBehavior = async (session) => {
 // Start the agent worker
 const startAgent = async () => {
   try {
-    // Initialize the logger
-    const loggerOptions = {
-      // Add any necessary options here
-    };
-
-    initializeLogger(loggerOptions);
-
     if (!LIVEKIT_URL || !LIVEKIT_API_KEY || !LIVEKIT_API_SECRET) {
       logger.error(`[${new Date().toISOString()}] LiveKit environment variables not set. Agent will not start.`);
       return;
@@ -261,9 +255,8 @@ const startAgent = async () => {
     });
     
     return worker;
-  } catch (err) {
-    logger.error(`[${new Date().toISOString()}] Failed to start agent:`, err);
-    return null;
+  } catch (error) {
+    logger.error(`[${new Date().toISOString()}] Error starting agent:`, error);
   }
 };
 
