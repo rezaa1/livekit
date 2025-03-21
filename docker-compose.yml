@@ -6,8 +6,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
     environment:
       - NODE_ENV=development
       - LIVEKIT_URL=${LIVEKIT_URL}
@@ -19,15 +17,21 @@ services:
     depends_on:
       - livekit
     networks:
-      - livekit-network
+      - traefik-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`backend.callninja.ai`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls=true"
+      - "traefik.http.routers.backend.tls.certresolver=myresolver"
+      - "traefik.http.services.backend.loadbalancer.server.port=8080"
+      - "traefik.docker.network=traefik-proxy"
 
   # Frontend service
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    ports:
-      - "3800:80"
     environment:
       - REACT_APP_BACKEND_URL=${REACT_APP_BACKEND_URL}
       - REACT_APP_LIVEKIT_URL=${REACT_APP_LIVEKIT_URL}
@@ -37,21 +41,37 @@ services:
     depends_on:
       - backend
     networks:
-      - livekit-network
+      - traefik-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`app.callninja.ai`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls=true"
+      - "traefik.http.routers.frontend.tls.certresolver=myresolver"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+      - "traefik.docker.network=traefik-proxy"
 
   # LiveKit server for local development
   livekit:
     image: livekit/livekit-server
     command: --dev --bind 0.0.0.0 --port 7880 --udp-port 7881 --udp-port 7882
     ports:
-      - "7880:7880"
       - "7881:7881/udp"
       - "7882:7882/udp"
     environment:
-      LIVEKIT_KEYS: "${LIVEKIT_API_KEY}: ${LIVEKIT_API_SECRET}"
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY}:${LIVEKIT_API_SECRET}"
     networks:
-      - livekit-network
+      - traefik-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.livekit.rule=Host(`livekit.callninja.ai`)"
+      - "traefik.http.routers.livekit.entrypoints=websecure"
+      - "traefik.http.routers.livekit.tls=true"
+      - "traefik.http.routers.livekit.tls.certresolver=myresolver"
+      - "traefik.http.services.livekit.loadbalancer.server.port=7880"
+      - "traefik.docker.network=traefik-proxy"
 
 networks:
-  livekit-network:
-    driver: bridge
+  traefik-proxy:
+    external: true
+
