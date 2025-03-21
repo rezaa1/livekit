@@ -1,11 +1,13 @@
+const logger = require('./path/to/logger'); // Adjust the path as necessary
+
 // Define the agent behavior
 module.exports = async (session) => {
-  console.log(`[${new Date().toISOString()}] Agent session started`);
+  logger.info(`Agent session started`);
   
   // Initialize OpenAI plugin if API key is available
   let openai;
   if (process.env.OPENAI_API_KEY) {
-    console.log(`[${new Date().toISOString()}] Initializing OpenAI plugin`);
+    logger.info(`Initializing OpenAI plugin`);
     const { OpenAIPlugin } = require('@livekit/agents-plugin-openai');
     
     openai = new OpenAIPlugin({
@@ -21,45 +23,45 @@ module.exports = async (session) => {
         systemPrompt: systemPrompt
       });
       
-      console.log(`[${new Date().toISOString()}] OpenAI LLM initialized successfully`);
+      logger.info(`OpenAI LLM initialized successfully`);
     } catch (err) {
-      console.error(`[${new Date().toISOString()}] Failed to initialize OpenAI LLM:`, err);
+      logger.error(`Failed to initialize OpenAI LLM:`, err);
     }
   } else {
-    console.warn(`[${new Date().toISOString()}] OpenAI API key not provided. Agent will run without AI capabilities.`);
+    logger.warn(`OpenAI API key not provided. Agent will run without AI capabilities.`);
   }
   
   // Subscribe to user audio
   try {
-    console.log(`[${new Date().toISOString()}] Getting participant from session`);
+    logger.info(`Getting participant from session`);
     const userParticipant = await session.getParticipant();
     if (!userParticipant) {
-      console.error(`[${new Date().toISOString()}] No user participant found`);
+      logger.error(`No user participant found`);
       return;
     }
     
-    console.log(`[${new Date().toISOString()}] Found participant: ${userParticipant.identity}`);
+    logger.info(`Found participant: ${userParticipant.identity}`);
     
     // Subscribe to user's audio track
-    console.log(`[${new Date().toISOString()}] Getting audio track`);
+    logger.info(`Getting audio track`);
     const audioTrack = await userParticipant.getTrack('audio');
     if (audioTrack) {
-      console.log(`[${new Date().toISOString()}] Found audio track, subscribing`);
+      logger.info(`Found audio track, subscribing`);
       await session.subscribe(audioTrack);
-      console.log(`[${new Date().toISOString()}] Subscribed to user audio track`);
+      logger.info(`Subscribed to user audio track`);
     } else {
-      console.warn(`[${new Date().toISOString()}] No audio track found for user`);
+      logger.warn(`No audio track found for user`);
     }
   } catch (err) {
-    console.error(`[${new Date().toISOString()}] Error subscribing to user audio:`, err);
+    logger.error(`Error subscribing to user audio:`, err);
   }
   
   // Keep the session alive
-  console.log(`[${new Date().toISOString()}] Keeping session alive`);
+  logger.info(`Keeping session alive`);
   await new Promise((resolve) => {
     // This will keep the agent running until the session ends
     session.once('close', () => {
-      console.log(`[${new Date().toISOString()}] Session closed`);
+      logger.info(`Session closed`);
       resolve();
     });
   });

@@ -144,7 +144,15 @@ app.use((err, req, res, next) => {
 
 // Start the server
 const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[${new Date().toISOString()}] Server running on port ${PORT}`);
+  // Initialize the logger
+  const loggerOptions = {
+    // Add any necessary options here
+  };
+
+  const logger = initializeLogger(loggerOptions);
+
+  // Use logger for logging
+  logger.info(`Server running on port ${PORT}`);
 });
 
 // Define the agent behavior
@@ -216,7 +224,11 @@ const agentBehavior = async (session) => {
 const startAgent = async () => {
   try {
     // Initialize the logger
-    initializeLogger();
+    const loggerOptions = {
+      // Add any necessary options here
+    };
+
+    initializeLogger(loggerOptions);
 
     if (!LIVEKIT_URL || !LIVEKIT_API_KEY || !LIVEKIT_API_SECRET) {
       console.error(`[${new Date().toISOString()}] LiveKit environment variables not set. Agent will not start.`);
