@@ -14,13 +14,6 @@ import './App.css';
 // This is a workaround for the TypeScript error with LiveKitRoom
 const LiveKitRoomComponent = LiveKitRoom as any;
 
-// Define interface for error data
-interface ErrorResponse {
-  error: string;
-  details?: string;
-  [key: string]: any;
-}
-
 function App() {
   const [token, setToken] = useState<string>('');
   const [roomName, setRoomName] = useState<string>('');
@@ -76,7 +69,7 @@ function App() {
       setFetchDetails(prev => `${prev}\nResponse status: ${response.status}`);
       
       if (!response.ok) {
-        let errorData: ErrorResponse = { error: 'Unknown error' };
+        let errorData;
         try {
           errorData = await response.json();
           console.error('Error response:', errorData);
