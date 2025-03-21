@@ -11,9 +11,7 @@ const app = express();
 app.use(express.json());
 
 // Initialize the logger
-const logger = initializeLogger({
-  // Add any necessary options here
-});
+const logger = console;
 
 // Enable CORS
 app.use((req, res, next) => {
