@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const { AccessToken } = require('@livekit/protocol');
-const { Agent } = require('@livekit/agents');
+const { Agent } = require('@livekit/agents').default;
 const { OpenAIPlugin } = require('@livekit/agents-plugin-openai');
 const path = require('path');
 
