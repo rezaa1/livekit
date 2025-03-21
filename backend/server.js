@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const { AccessToken } = require('@livekit/protocol');
-const { Agent } = require('@livekit/agents');
+const { AgentBuilder } = require('@livekit/agents');
 const { OpenAIPlugin } = require('@livekit/agents-plugin-openai');
 const path = require('path');
 
@@ -223,13 +223,12 @@ const startAgent = async () => {
     console.log(`[${new Date().toISOString()}] Using LIVEKIT_URL: ${LIVEKIT_URL}`);
     console.log(`[${new Date().toISOString()}] Using LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}`);
     
-    // Create a new Agent instance
-    const agent = new Agent({
-      url: LIVEKIT_URL,
-      apiKey: LIVEKIT_API_KEY,
-      apiSecret: LIVEKIT_API_SECRET,
-      behavior: agentBehavior
-    });
+    const agent = await AgentBuilder.create()
+      .setBehavior(agentBehavior)
+      .setLivekitUrl(LIVEKIT_URL)
+      .setApiKey(LIVEKIT_API_KEY)
+      .setApiSecret(LIVEKIT_API_SECRET)
+      .build();
     
     console.log(`[${new Date().toISOString()}] Starting agent`);
     await agent.start();
