@@ -69,11 +69,11 @@ function App() {
       setFetchDetails(prev => `${prev}\nResponse status: ${response.status}`);
       
       if (!response.ok) {
-        let errorData;
+        let errorData: { error?: string; details?: string };
         try {
           errorData = await response.json();
           console.error('Error response:', errorData);
-          setFetchDetails(prev => `${prev}\nError response: ${JSON.stringify(errorData, null, 2)}`);
+          setFetchDetails(prev => `${prev}\nError response: ${JSON.stringify(errorData)}`);
         } catch (e) {
           const responseText = await response.text();
           console.error('Error response text:', responseText);
