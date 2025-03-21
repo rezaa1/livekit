@@ -4,6 +4,7 @@ const { AccessToken } = require('@livekit/protocol');
 const { Worker, WorkerOptions } = require('@livekit/agents');
 const { OpenAIPlugin } = require('@livekit/agents-plugin-openai');
 const path = require('path');
+const { initializeLogger } = require('@livekit/agents');
 
 // Initialize Express app
 const app = express();
@@ -214,6 +215,9 @@ const agentBehavior = async (session) => {
 // Start the agent worker
 const startAgent = async () => {
   try {
+    // Initialize the logger
+    initializeLogger();
+
     if (!LIVEKIT_URL || !LIVEKIT_API_KEY || !LIVEKIT_API_SECRET) {
       console.error(`[${new Date().toISOString()}] LiveKit environment variables not set. Agent will not start.`);
       return;
