@@ -4,7 +4,7 @@ const { AccessToken } = require('@livekit/protocol');
 const { Worker, WorkerOptions } = require('@livekit/agents');
 const { OpenAIPlugin } = require('@livekit/agents-plugin-openai');
 const path = require('path');
-const { initializeLogger } = require('@livekit/agents');
+const { initializeLogger, getLogger } = require('@livekit/agents');
 
 // Initialize Express app
 const app = express();
