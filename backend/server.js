@@ -1,9 +1,12 @@
-require('dotenv').config();
-const express = require('express');
-const { AccessToken } = require('@livekit/protocol');
-const { AgentBuilder } = require('@livekit/agents');
-const { OpenAIPlugin } = require('@livekit/agents-plugin-openai');
-const path = require('path');
+import dotenv from 'dotenv';
+dotenv.config();
+import express from 'express';
+import { AccessToken } from '@livekit/protocol';
+import * as openai from '@livekit/agents-plugin-openai';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { z } from 'zod';
+import multimodal from '@livekit/agents';
 
 // Initialize Express app
 const app = express();
@@ -154,7 +157,7 @@ const agentBehavior = async (session) => {
   let openai;
   if (OPENAI_API_KEY) {
     console.log(`[${new Date().toISOString()}] Initializing OpenAI plugin`);
-    openai = new OpenAIPlugin({
+    openai = new openai.realtime.RealtimeModel({
       apiKey: OPENAI_API_KEY,
     });
     
@@ -211,7 +214,7 @@ const agentBehavior = async (session) => {
   });
 };
 
-// Start the agent worker
+// Start the agent
 const startAgent = async () => {
   try {
     if (!LIVEKIT_URL || !LIVEKIT_API_KEY || !LIVEKIT_API_SECRET) {
@@ -223,15 +226,39 @@ const startAgent = async () => {
     console.log(`[${new Date().toISOString()}] Using LIVEKIT_URL: ${LIVEKIT_URL}`);
     console.log(`[${new Date().toISOString()}] Using LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}`);
     
-    const agent = await AgentBuilder.create()
-      .setBehavior(agentBehavior)
-      .setLivekitUrl(LIVEKIT_URL)
-      .setApiKey(LIVEKIT_API_KEY)
-      .setApiSecret(LIVEKIT_API_SECRET)
-      .build();
+    // Create a model using the openai module
+    const model = new openai.realtime.RealtimeModel({
+      instructions: 'You are a helpful assistant.',
+    });
+
+    const fncCtx = {
+      weather: {
+        description: 'Get the weather in a location',
+        parameters: {
+          location: 'string',
+        },
+        execute: async ({ location }) => {
+          console.debug(`executing weather function for ${location}`);
+          const response = await fetch(`https://wttr.in/${location}?format=%C+%t`);
+          if (!response.ok) {
+            throw new Error(`Weather API returned status: ${response.status}`);
+          }
+          const weather = await response.text();
+          return `The weather in ${location} right now is ${weather}.`;
+        },
+      },
+    };
+
+    const agent = new multimodal.MultimodalAgent({ model, fncCtx });
+    const session = await agent.start(ctx.room, participant);
     
-    console.log(`[${new Date().toISOString()}] Starting agent`);
-    await agent.start();
+    session.conversation.item.create(llm.ChatMessage.create({
+      role: llm.ChatRole.ASSISTANT,
+      text: 'How can I help you today?',
+    }));
+
+    session.response.create();
+
     console.log(`[${new Date().toISOString()}] LiveKit Agent worker started successfully`);
     
     // Handle graceful shutdown
@@ -262,3 +289,4 @@ if (require.main === module) {
 
 // Export for testing
 module.exports = { app, agentBehavior };
+
