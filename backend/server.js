@@ -219,7 +219,7 @@ const agentBehavior = async (session) => {
 };
 
 // Start the agent
-const startAgent = async () => {
+const startAgent = async (ctx) => {
   try {
     if (!LIVEKIT_URL || !LIVEKIT_API_KEY || !LIVEKIT_API_SECRET) {
       console.error(`[${new Date().toISOString()}] LiveKit environment variables not set. Agent will not start.`);
@@ -254,7 +254,10 @@ const startAgent = async () => {
     };
 
     const agent = new multimodal.MultimodalAgent({ model, fncCtx });
-    const session = await agent.start(ctx.room, participant);
+    
+    // Ensure you have a valid room object
+    const room = await connectToRoom(ctx.room); // Replace with actual room connection logic
+    const session = await agent.start(room, ctx.participant); // Pass the room and participant
     
     session.conversation.item.create(llm.ChatMessage.create({
       role: llm.ChatRole.ASSISTANT,
@@ -280,11 +283,29 @@ const startAgent = async () => {
   }
 };
 
+// Function to connect to a LiveKit room
+const connectToRoom = async (roomName) => {
+  // Implement the logic to connect to the LiveKit room
+  // This typically involves using the LiveKit client to connect
+  // Example:
+  const room = await liveKitClient.connect(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
+    room: roomName,
+  });
+  return room;
+};
+
 // Start the agent if this file is run directly
 if (import.meta.url === new URL(import.meta.url).href) {
   if (OPENAI_API_KEY) {
     console.log(`[${new Date().toISOString()}] Starting LiveKit Agent with OpenAI integration...`);
-    startAgent();
+    
+    // Create a mock context for testing
+    const mockCtx = {
+      room: 'testRoom', // Replace with actual room name
+      participant: 'testParticipant' // Replace with actual participant identity
+    };
+    
+    startAgent(mockCtx); // Pass the mock context
   } else {
     console.log(`[${new Date().toISOString()}] OpenAI API key not provided. To enable the agent, add OPENAI_API_KEY to your .env file.`);
     console.log(`[${new Date().toISOString()}] Server running without LiveKit Agent.`);
