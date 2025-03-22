@@ -1,12 +1,16 @@
 import dotenv from 'dotenv';
 dotenv.config();
 import express from 'express';
-import { AccessToken } from '@livekit/protocol';
+import * as LiveKitProtocol from '@livekit/protocol';
+const AccessToken = LiveKitProtocol.AccessToken;
 import * as openai from '@livekit/agents-plugin-openai';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
-import multimodal from '@livekit/agents';
+import { multimodal, initializeLogger } from '@livekit/agents';
+
+// Initialize the logger with default options
+initializeLogger({ pretty: true, level: 'info' });
 
 // Initialize Express app
 const app = express();
@@ -277,7 +281,7 @@ const startAgent = async () => {
 };
 
 // Start the agent if this file is run directly
-if (require.main === module) {
+if (import.meta.url === new URL(import.meta.url).href) {
   if (OPENAI_API_KEY) {
     console.log(`[${new Date().toISOString()}] Starting LiveKit Agent with OpenAI integration...`);
     startAgent();
@@ -288,5 +292,5 @@ if (require.main === module) {
 }
 
 // Export for testing
-module.exports = { app, agentBehavior };
+export default { app, agentBehavior };
 
