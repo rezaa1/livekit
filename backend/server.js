@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 import express from 'express';
 import * as LiveKitProtocol from '@livekit/protocol';
+import {  Room, connect } from 'livekit-client';
 const AccessToken = LiveKitProtocol.AccessToken;
 import * as openai from '@livekit/agents-plugin-openai';
 import path from 'node:path';
@@ -69,6 +70,11 @@ const checkLiveKitEnv = (req, res, next) => {
   }
   next();
 };
+
+// Create a LiveKit client instance
+const liveKitClient = new LiveKitClient(LIVEKIT_URL, LIVEKIT_API_KEY, {
+  // You can add options here if needed
+});
 
 // API routes
 app.get('/api/health', (req, res) => {
@@ -218,6 +224,28 @@ const agentBehavior = async (session) => {
   });
 };
 
+// Function to connect to a LiveKit room
+const connectToRoom = async (url, token) => {
+  const room = new Room();
+  
+  try {
+    await room.connect(url, token);
+    console.log(`Connected to room: ${room.name}`);
+    
+    room.on('participantConnected', participant => {
+      console.log(`Participant connected: ${participant.identity}`);
+    });
+
+    room.on('participantDisconnected', participant => {
+      console.log(`Participant disconnected: ${participant.identity}`);
+    });
+
+    // Additional event handlers can be added here
+  } catch (error) {
+    console.error('Error connecting to room:', error);
+  }
+};
+
 // Start the agent
 const startAgent = async (ctx) => {
   try {
@@ -256,7 +284,7 @@ const startAgent = async (ctx) => {
     const agent = new multimodal.MultimodalAgent({ model, fncCtx });
     
     // Ensure you have a valid room object
-    const room = await connectToRoom(ctx.room); // Replace with actual room connection logic
+    const room = await connectToRoom(LIVEKIT_URL, LIVEKIT_API_SECRET); // Replace with actual room connection logic
     const session = await agent.start(room, ctx.participant); // Pass the room and participant
     
     session.conversation.item.create(llm.ChatMessage.create({
@@ -281,17 +309,6 @@ const startAgent = async (ctx) => {
     console.error(`[${new Date().toISOString()}] Failed to start agent:`, err);
     return null;
   }
-};
-
-// Function to connect to a LiveKit room
-const connectToRoom = async (roomName) => {
-  // Implement the logic to connect to the LiveKit room
-  // This typically involves using the LiveKit client to connect
-  // Example:
-  const room = await liveKitClient.connect(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
-    room: roomName,
-  });
-  return room;
 };
 
 // Start the agent if this file is run directly
